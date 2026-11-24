@@ -228,27 +228,3 @@ class _RegisterAccountScreenState extends State<RegisterAccountScreen> {
     );
   }
 }
-
-/// The fitness-center form is the next ticket. The choice is already on screen.
-class CenterRegisterPlaceholder extends StatelessWidget {
-  const CenterRegisterPlaceholder({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Text(
-            'Open your center',
-            style: TextStyle(
-              color: AppColors.paper,
-              fontSize: 28,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}

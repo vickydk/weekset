@@ -16,6 +16,7 @@ class SessionController extends ChangeNotifier {
   Profile? profile;
   String? error;
   String? _refresh;
+  String? accessToken;
 
   Future<void> restore() async {
     final stored = await tokens.read();
@@ -88,8 +89,36 @@ class SessionController extends ChangeNotifier {
     }
   }
 
+  Future<void> adopt(AuthSession session) async {
+    error = null;
+    await _keep(session);
+    _open(session.profile);
+  }
+
+  String? inviteCode;
+
+  Future<void> inviteManager(String email, List<String> branchIds) async {
+    final access = accessToken;
+    if (access == null) return;
+    inviteCode = await api.inviteManager(
+      accessToken: access,
+      email: email,
+      branchIds: branchIds,
+    );
+    notifyListeners();
+  }
+
+  Future<void> addBranch(String name) async {
+    final access = accessToken;
+    if (access == null) return;
+    await api.addBranch(accessToken: access, name: name);
+    profile = await api.me(access);
+    _open(profile!);
+  }
+
   Future<void> _keep(AuthSession session) async {
     _refresh = session.refreshToken;
+    accessToken = session.accessToken;
     await tokens.write(
       StoredTokens(access: session.accessToken, refresh: session.refreshToken),
     );

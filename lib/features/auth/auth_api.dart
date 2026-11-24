@@ -46,6 +46,13 @@ class Profile {
   }
 }
 
+class BranchName {
+  const BranchName({required this.id, required this.name});
+
+  final String id;
+  final String name;
+}
+
 class Membership {
   const Membership({
     required this.role,
@@ -53,6 +60,7 @@ class Membership {
     required this.fitnessCenterId,
     required this.centerName,
     this.branchName,
+    this.branches = const [],
   });
 
   final String role;
@@ -60,14 +68,24 @@ class Membership {
   final String fitnessCenterId;
   final String centerName;
   final String? branchName;
+  final List<BranchName> branches;
 
   factory Membership.fromJson(Map<String, dynamic> json) {
+    final raw = json['branches'] as List<dynamic>? ?? const [];
     return Membership(
       role: json['role'] as String? ?? '',
       status: json['status'] as String? ?? '',
       fitnessCenterId: json['fitness_center_id'] as String? ?? '',
       centerName: json['center_name'] as String? ?? '',
       branchName: json['branch_name'] as String?,
+      branches: raw
+          .map(
+            (row) => BranchName(
+              id: (row as Map<String, dynamic>)['id'] as String? ?? '',
+              name: row['name'] as String? ?? '',
+            ),
+          )
+          .toList(),
     );
   }
 }
@@ -123,6 +141,66 @@ class AuthApi {
       'display_name': displayName,
       'account_type': accountType,
     });
+  }
+
+  Future<AuthSession> openCenter({
+    required String email,
+    required String password,
+    required String displayName,
+    required String centerName,
+    required String branchName,
+    required String timezone,
+  }) {
+    return _session('POST', '/v1/fitness-centers', {
+      'email': email,
+      'password': password,
+      'display_name': displayName,
+      'center_name': centerName,
+      'branch_name': branchName,
+      'timezone': timezone,
+    });
+  }
+
+  Future<Map<String, dynamic>> addBranch({
+    required String accessToken,
+    required String name,
+  }) async {
+    final response = await _client.post(
+      Uri.parse('$baseUrl/v1/branches'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $accessToken',
+      },
+      body: jsonEncode({'name': name}),
+    );
+    if (response.statusCode != 201) {
+      throw const AuthException('unexpected error');
+    }
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  Future<String> inviteManager({
+    required String accessToken,
+    required String email,
+    required List<String> branchIds,
+  }) async {
+    final response = await _client.post(
+      Uri.parse('$baseUrl/v1/invites'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $accessToken',
+      },
+      body: jsonEncode({
+        'email': email,
+        'role': 'manager',
+        'branch_ids': branchIds,
+      }),
+    );
+    if (response.statusCode != 201) {
+      throw const AuthException('That person cannot be invited.');
+    }
+    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    return json['code'] as String? ?? '';
   }
 
   Future<AuthSession> login({required String email, required String password}) {
