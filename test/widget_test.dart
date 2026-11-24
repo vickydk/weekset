@@ -6,10 +6,16 @@ import 'package:weekset/core/widgets/locked_screen.dart';
 import 'package:weekset/core/widgets/option_switcher.dart';
 import 'package:weekset/core/widgets/status_chip.dart';
 import 'package:weekset/core/widgets/suspended_screen.dart';
+import 'package:weekset/core/widgets/context_header.dart';
 import 'package:weekset/features/auth/auth_api.dart';
 import 'package:weekset/features/auth/auth_gate.dart';
+import 'package:weekset/features/auth/session_controller.dart';
 import 'package:weekset/features/auth/token_store.dart';
+import 'package:weekset/core/routing/app_router.dart';
+import 'package:weekset/core/widgets/app_tab_bar.dart';
+import 'package:weekset/features/home/home_card.dart';
 import 'package:weekset/features/people/people_views.dart';
+import 'package:weekset/features/shell/role_shell.dart';
 
 void main() {
   testWidgets('opens on the welcome screen', (tester) async {
@@ -179,6 +185,99 @@ void main() {
     expect(find.text('invite is not valid'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('a client path stays on the client tabs', (tester) async {
+    await _pumpPhone(
+      tester,
+      RoleShell(
+        session: _session([_membership('harbor', 'Harbor Club')]),
+        initialPath: AppRouter.trainerToday,
+        preview: HomeCard.emptyFor('client', centerName: 'Harbor Club'),
+      ),
+    );
+    expect(find.text('Home'), findsOneWidget);
+    expect(find.text('What do I do next?'), findsOneWidget);
+    expect(find.text('No session today'), findsOneWidget);
+    expect(find.text('Availability'), findsNothing);
+    expect(find.byType(AppTabBar), findsOneWidget);
+  });
+
+  testWidgets('the locked screen has no tab bar', (tester) async {
+    await _pumpPhone(tester, LockedScreen(onHaveCode: () {}, onSignOut: () {}));
+    expect(find.byType(AppTabBar), findsNothing);
+  });
+
+  testWidgets('switching center changes the header', (tester) async {
+    await _pumpPhone(
+      tester,
+      RoleShell(
+        session: _session([
+          _membership('harbor', 'Harbor Club'),
+          _membership('north', 'North Gym'),
+        ]),
+        preview: HomeCard.emptyFor('client', centerName: 'Harbor Club'),
+      ),
+    );
+    expect(find.text('Harbor Club'), findsOneWidget);
+    await tester.tap(find.text('Profile'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('North Gym'));
+    await tester.pumpAndSettle();
+    final header = tester.widget<ContextHeader>(find.byType(ContextHeader));
+    expect(header.centerName, 'North Gym');
+  });
+
+  test('a manager dashboard does not keep workout fields', () {
+    final card = HomeCard.fromJson({
+      'question': 'What is stuck at this branch?',
+      'center_name': 'Harbor Club',
+      'empty_title': 'No one at this branch yet',
+      'empty_message': 'Invite.',
+      'primary_action': 'Invite',
+      'note': 'bench press',
+      'sets': 3,
+      'reps': 8,
+      'load': 40,
+      'sessions': [
+        {
+          'time': '07:00',
+          'client_name': 'Maya',
+          'status': 'confirmed',
+          'note': 'secret',
+        },
+      ],
+    });
+    expect(card.question, 'What is stuck at this branch?');
+    expect(card.sessions.single.title, 'Maya');
+    expect(card.sessions.single.title.contains('secret'), isFalse);
+  });
+}
+
+SessionController _session(List<Membership> memberships) {
+  final session = SessionController(
+    api: _FakeApi(),
+    tokens: MemoryTokenStore(),
+  );
+  session
+    ..profile = Profile(
+      id: 'user',
+      email: 'maya@harbor.club',
+      displayName: 'Maya',
+      accountType: 'client',
+      memberships: memberships,
+    )
+    ..gate = Gate.shell
+    ..accessToken = 'access';
+  return session;
+}
+
+Membership _membership(String id, String name) {
+  return Membership(
+    role: 'client',
+    status: 'active',
+    fitnessCenterId: id,
+    centerName: name,
+  );
 }
 
 Future<void> _pumpPhone(WidgetTester tester, Widget child) async {

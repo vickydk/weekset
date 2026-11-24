@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../home/home_card.dart';
+
 /// The signed-in person. Memberships decide whether a menu opens.
 class Profile {
   const Profile({
@@ -284,6 +286,24 @@ class AuthApi {
     throw AuthException(_errorMessage(response, 'invite is not valid'));
   }
 
+  Future<HomeCard> home({
+    required String accessToken,
+    String? centerId,
+    String? branchId,
+  }) async {
+    final response = await _authed(
+      'GET',
+      '/v1/home',
+      accessToken,
+      branchId: branchId,
+      centerId: centerId,
+    );
+    if (response.statusCode != 200) {
+      throw AuthException(_errorMessage(response, 'unexpected error'));
+    }
+    return HomeCard.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+  }
+
   Future<PeoplePage> people({
     required String accessToken,
     String? branchId,
@@ -482,11 +502,13 @@ class AuthApi {
     String path,
     String accessToken, {
     String? branchId,
+    String? centerId,
     Object? body,
   }) {
     final headers = {
       'Authorization': 'Bearer $accessToken',
       if (body != null) 'Content-Type': 'application/json',
+      if (centerId != null && centerId.isNotEmpty) 'X-Weekset-Center': centerId,
       if (branchId != null && branchId.isNotEmpty) 'X-Weekset-Branch': branchId,
     };
     final uri = Uri.parse('$baseUrl$path');

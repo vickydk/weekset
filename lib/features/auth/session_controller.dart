@@ -96,6 +96,18 @@ class SessionController extends ChangeNotifier {
   }
 
   String? inviteCode;
+  String? selectedCenterId;
+  String? selectedBranchId;
+
+  void selectCenter(String id) {
+    selectedCenterId = id;
+    notifyListeners();
+  }
+
+  void selectBranch(String id) {
+    selectedBranchId = id;
+    notifyListeners();
+  }
 
   Future<void> inviteManager(String email, List<String> branchIds) async {
     final access = accessToken;

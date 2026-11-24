@@ -8,9 +8,10 @@ import 'people_views.dart';
 
 /// Loads the roster and opens the invite, assign, and confirm sheets.
 class PeopleScreen extends StatefulWidget {
-  const PeopleScreen({required this.session, super.key});
+  const PeopleScreen({required this.session, this.embedded = false, super.key});
 
   final SessionController session;
+  final bool embedded;
 
   @override
   State<PeopleScreen> createState() => _PeopleScreenState();
@@ -286,40 +287,39 @@ class _PeopleScreenState extends State<PeopleScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Back'),
-              ),
+    final body = Column(
+      children: [
+        if (!widget.embedded)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Back'),
             ),
-            if (_notice != null)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Text(
-                  _notice!,
-                  style: const TextStyle(color: AppColors.clay),
+          ),
+        if (_notice != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Text(
+              _notice!,
+              style: const TextStyle(color: AppColors.clay),
+            ),
+          ),
+        Expanded(
+          child: _loading
+              ? const Center(child: Text('Loading people'))
+              : PeopleListView(
+                  people: _page.people,
+                  invites: _page.invites,
+                  includeManagers: _isCenter,
+                  onInvite: _invite,
+                  onOpen: _open,
                 ),
-              ),
-            Expanded(
-              child: _loading
-                  ? const Center(child: Text('Loading people'))
-                  : PeopleListView(
-                      people: _page.people,
-                      invites: _page.invites,
-                      includeManagers: _isCenter,
-                      onInvite: _invite,
-                      onOpen: _open,
-                    ),
-            ),
-          ],
         ),
-      ),
+      ],
     );
+    if (widget.embedded) return body;
+    return Scaffold(body: SafeArea(child: body));
   }
 }
 
