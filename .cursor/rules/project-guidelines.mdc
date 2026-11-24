@@ -1,0 +1,15 @@
+---
+description: Flutter/Dart conventions for Weekset Android and iOS
+alwaysApply: true
+---
+
+# Project guidelines
+
+- **Stack:** Flutter + Dart, one codebase for Android and iOS. No web/desktop targets.
+- **Product:** Weekset, one fitness center. Product scope lives on the [Weekset Notion page](https://app.notion.com/p/c9f885f46cd582c0ae6f811d74793e03). Phase 1 is schedule, session log, solo day, and access.
+- **Layout:** `lib/features/<name>/` with `data`, `domain`, and `presentation`. `lib/core/` for theme, routing, network, and secure storage. Three shells: client, trainer, center. Do not put app logic in `main.dart`.
+- **Auth:** email and password against the Weekset API. Store access and refresh tokens in secure storage. Do not add Firebase, Google, or Apple sign-in unless a ticket says so.
+- **UI:** one shared theme. Reusable widgets and screens need Widgetbook use cases in the same change (`lib/widgetbook.dart`, `*.widgetbook.dart`). Mock auth and network in the catalogue.
+- **Secrets:** never commit production `.env`, API tokens, or keystores. Use dart-define, flavors, or gitignored config.
+- **Quality:** `dart format`, `flutter analyze`, and `flutter test` must be clean. No new `print` calls; no ignored analyzer errors.
+- **Scope:** do not build a later milestone inside the current ticket. Workout notes stay between the client and their trainer.

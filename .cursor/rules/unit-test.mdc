@@ -1,0 +1,16 @@
+---
+description: Unit and widget test conventions for Weekset Flutter
+globs: "**/*_test.dart"
+alwaysApply: false
+---
+
+# Tests
+
+- Files are `test/**/*_test.dart`. Name them after the unit or widget (`auth_repository_test.dart`).
+- Use `flutter_test`. Mock HTTP and platform channels with `mocktail` (or the mock library already in `pubspec.yaml`).
+- **No real network, API, or device accounts** in unit/widget tests.
+- Unit-test validators, mapping, token storage, and session logic. Widget-test UI states: loading, error, empty, disabled.
+- Auth routing: signed-out → welcome or log in; signed-in → the shell for that role; session restore in progress → the app does not flash the wrong shell.
+- Login and reset password: success, failure, and invalid email or password.
+- Each new behavior needs a failing-then-passing test in the same change. Run `flutter test` before finishing.
+- Do not add `integration_test` unless the task is explicitly end-to-end on a device/emulator.

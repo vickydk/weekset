@@ -1,0 +1,13 @@
+---
+description: Always follow AGENTS.md as the source of truth for this repo
+alwaysApply: true
+---
+
+# AGENTS.md is canonical
+
+Before any change, read and follow [`AGENTS.md`](../../AGENTS.md) at the repository root.
+
+- Do not contradict it in chat, commits, or generated code.
+- Do not duplicate its full contents in other rules; link to it instead.
+- `CLAUDE.md` only points here. If the two ever disagree, **`AGENTS.md` wins**.
+- Stack is Flutter/Dart for Android and iOS. Do not switch frameworks unless the user explicitly asks.
