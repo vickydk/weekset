@@ -1,8 +1,9 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:widgetbook/widgetbook.dart';
 
 import 'core/theme/app_theme.dart';
 import 'core/widgets/app_shell.widgetbook.dart';
+import 'core/widgets/foundations.widgetbook.dart';
 
 /// Catalogue entry. Run with `flutter run -t lib/widgetbook.dart`.
 void main() {
@@ -30,6 +31,7 @@ class WidgetbookApp extends StatelessWidget {
             ),
           ],
         ),
+        foundationsFolder(),
       ],
       addons: [
         MaterialThemeAddon(
