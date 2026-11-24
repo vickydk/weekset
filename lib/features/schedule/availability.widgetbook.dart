@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:widgetbook/widgetbook.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/status_chip.dart';
 import 'availability_week.dart';
+import 'client_week.dart';
 
 WidgetbookFolder availabilityFolder() {
   return WidgetbookFolder(
@@ -14,6 +16,14 @@ WidgetbookFolder availabilityFolder() {
           WidgetbookUseCase(name: 'empty template', builder: _empty),
           WidgetbookUseCase(name: 'open week', builder: _open),
           WidgetbookUseCase(name: 'one hour closed', builder: _closed),
+        ],
+      ),
+      WidgetbookComponent(
+        name: 'Client week',
+        useCases: [
+          WidgetbookUseCase(name: 'empty', builder: _clientEmpty),
+          WidgetbookUseCase(name: 'open hour', builder: _clientOpen),
+          WidgetbookUseCase(name: 'requested', builder: _clientRequested),
         ],
       ),
     ],
@@ -50,6 +60,37 @@ Widget _closed(BuildContext context) {
       hours: [
         HourSlot(time: '07:00', open: false),
         HourSlot(time: '08:00', open: true),
+      ],
+    ),
+  );
+}
+
+Widget _clientEmpty(BuildContext context) {
+  return _frame(const ClientWeek(open: [], bookings: []));
+}
+
+Widget _clientOpen(BuildContext context) {
+  return _frame(
+    const ClientWeek(
+      open: [HourSlot(time: '07:00', open: true)],
+      bookings: [],
+    ),
+  );
+}
+
+Widget _clientRequested(BuildContext context) {
+  return _frame(
+    const ClientWeek(
+      open: [],
+      bookings: [
+        WeekBooking(
+          id: '1',
+          time: '07:00',
+          title: 'Alex',
+          status: SessionStatus.requested,
+          startsAt: '',
+          endsAt: '',
+        ),
       ],
     ),
   );

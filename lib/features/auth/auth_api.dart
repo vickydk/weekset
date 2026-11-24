@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 
 import '../home/home_card.dart';
 import '../schedule/availability_week.dart';
+import '../schedule/client_week.dart';
 
 /// The signed-in person. Memberships decide whether a menu opens.
 class Profile {
@@ -382,6 +383,46 @@ class AuthApi {
     );
     if (response.statusCode != 204) {
       throw AuthException(_errorMessage(response, 'check the hours'));
+    }
+  }
+
+  Future<List<WeekBooking>> bookings({
+    required String accessToken,
+    required String from,
+    required String to,
+    String? centerId,
+  }) async {
+    final response = await _authed(
+      'GET',
+      '/v1/bookings?from=$from&to=$to',
+      accessToken,
+      centerId: centerId,
+    );
+    if (response.statusCode != 200) {
+      throw AuthException(_errorMessage(response, 'unexpected error'));
+    }
+    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    return [
+      for (final raw in json['bookings'] as List<dynamic>? ?? [])
+        WeekBooking.fromJson(raw as Map<String, dynamic>),
+    ];
+  }
+
+  Future<void> requestBooking({
+    required String accessToken,
+    required String startsAt,
+    required String endsAt,
+    String? centerId,
+  }) async {
+    final response = await _authed(
+      'POST',
+      '/v1/bookings',
+      accessToken,
+      centerId: centerId,
+      body: {'starts_at': startsAt, 'ends_at': endsAt},
+    );
+    if (response.statusCode != 201) {
+      throw AuthException(_errorMessage(response, 'hour is already booked'));
     }
   }
 

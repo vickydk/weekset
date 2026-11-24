@@ -15,6 +15,8 @@ import '../home/home_card.dart';
 import '../people/people_screen.dart';
 import '../schedule/availability_screen.dart';
 import '../schedule/availability_week.dart';
+import '../schedule/client_week.dart';
+import '../schedule/client_week_screen.dart';
 
 /// One shell for the active role. Another role's path is sent home first.
 class RoleShell extends StatefulWidget {
@@ -181,6 +183,13 @@ class _RoleShellState extends State<RoleShell> {
                 child: AvailabilityWeek(hours: []),
               )
             : AvailabilityScreen(session: widget.session),
+      AppRouter.clientSchedule =>
+        widget.preview != null
+            ? const Padding(
+                padding: EdgeInsets.all(24),
+                child: ClientWeek(open: [], bookings: []),
+              )
+            : ClientWeekScreen(session: widget.session),
       AppRouter.clientProfile ||
       AppRouter.trainerProfile ||
       AppRouter.centerProfile => _profile(membership),
