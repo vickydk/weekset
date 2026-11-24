@@ -31,7 +31,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
       final movements = await widget.session.api.exercises(accessToken: token);
       final clients = await widget.session.api.trainerClients(
         accessToken: token,
-        centerId: widget.session.selectedCenterId,
+        centerId: widget.session.centerHeader,
       );
       if (!mounted) return;
       setState(() {
@@ -57,7 +57,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
         clientId: client.id,
         planDate: date,
         slug: movement.slug,
-        centerId: widget.session.selectedCenterId,
+        centerId: widget.session.centerHeader,
       );
     } on Object {
       return;

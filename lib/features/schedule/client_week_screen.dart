@@ -31,19 +31,19 @@ class _ClientWeekScreenState extends State<ClientWeekScreen> {
     if (token == null) return;
     final now = DateTime.now().toUtc();
     final from = _stamp(now);
-    final to = _stamp(now.add(const Duration(days: 7)));
+    final to = _stamp(now.add(const Duration(days: 14)));
     try {
       final hours = await widget.session.api.availability(
         accessToken: token,
         from: from,
         to: to,
-        centerId: widget.session.selectedCenterId,
+        centerId: widget.session.centerHeader,
       );
       final bookings = await widget.session.api.bookings(
         accessToken: token,
         from: from,
         to: to,
-        centerId: widget.session.selectedCenterId,
+        centerId: widget.session.centerHeader,
       );
       if (!mounted) return;
       setState(() {
@@ -65,7 +65,7 @@ class _ClientWeekScreenState extends State<ClientWeekScreen> {
         accessToken: token,
         startsAt: hour.startsAt!,
         endsAt: hour.endsAt!,
-        centerId: widget.session.selectedCenterId,
+        centerId: widget.session.centerHeader,
       );
       await _load();
     } on Object catch (error) {
@@ -82,7 +82,7 @@ class _ClientWeekScreenState extends State<ClientWeekScreen> {
         accessToken: token,
         startsAt: hour.startsAt!,
         endsAt: hour.endsAt!,
-        centerId: widget.session.selectedCenterId,
+        centerId: widget.session.centerHeader,
       );
       await _load();
     } on Object catch (error) {
@@ -103,7 +103,7 @@ class _ClientWeekScreenState extends State<ClientWeekScreen> {
         accessToken: token,
         seriesId: booking.seriesId,
         occurrenceOn: day,
-        centerId: widget.session.selectedCenterId,
+        centerId: widget.session.centerHeader,
       );
       await _load();
     } on Object catch (error) {

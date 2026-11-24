@@ -104,6 +104,22 @@ class SessionController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// The center header for a request. One active membership is used until the
+  /// person picks another.
+  String? get centerHeader {
+    final current = profile;
+    if (current == null) return null;
+    final selected = selectedCenterId;
+    if (selected != null) {
+      for (final row in current.memberships) {
+        if (row.fitnessCenterId == selected && row.status == 'active') {
+          return row.fitnessCenterId;
+        }
+      }
+    }
+    return current.activeMembership?.fitnessCenterId;
+  }
+
   void selectBranch(String id) {
     selectedBranchId = id;
     notifyListeners();

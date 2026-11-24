@@ -397,15 +397,22 @@ class _RoleShellState extends State<RoleShell> {
     }
     return Padding(
       padding: const EdgeInsets.all(24),
-      child: BranchSwitcher(
-        selectedId: widget.session.selectedBranchId ?? branches.first.id,
-        onSelected: (id) {
-          widget.session.selectBranch(id);
-          _load();
-        },
-        branches: [
-          for (final branch in branches)
-            SwitcherOption(id: branch.id, title: branch.name),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          BranchSwitcher(
+            selectedId: widget.session.selectedBranchId ?? branches.first.id,
+            onSelected: (id) {
+              widget.session.selectBranch(id);
+              _load();
+            },
+            branches: [
+              for (final branch in branches)
+                SwitcherOption(id: branch.id, title: branch.name),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SecondaryButton(label: 'Sign out', onPressed: widget.session.signOut),
         ],
       ),
     );

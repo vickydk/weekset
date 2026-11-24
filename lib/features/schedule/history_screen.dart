@@ -32,9 +32,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
     try {
       final bookings = await widget.session.api.bookings(
         accessToken: token,
-        from: _stamp(now.subtract(const Duration(days: 14))),
+        from: _stamp(now.subtract(const Duration(days: 13))),
         to: _stamp(now.add(const Duration(days: 1))),
-        centerId: widget.session.selectedCenterId,
+        centerId: widget.session.centerHeader,
       );
       if (!mounted) return;
       setState(() {
@@ -55,7 +55,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       final log = await widget.session.api.readLog(
         accessToken: token,
         bookingId: booking.id,
-        centerId: widget.session.selectedCenterId,
+        centerId: widget.session.centerHeader,
       );
       if (!mounted) return;
       setState(() => _log = log);

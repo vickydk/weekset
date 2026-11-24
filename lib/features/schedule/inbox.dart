@@ -53,7 +53,7 @@ class _InboxPanelState extends State<InboxPanel> {
     try {
       final notices = await widget.session.api.notifications(
         accessToken: token,
-        centerId: widget.session.selectedCenterId,
+        centerId: widget.session.centerHeader,
       );
       if (!mounted) return;
       setState(() => _notices = notices);
@@ -70,7 +70,7 @@ class _InboxPanelState extends State<InboxPanel> {
       final opened = await widget.session.api.openNotification(
         accessToken: token,
         id: notice.id,
-        centerId: widget.session.selectedCenterId,
+        centerId: widget.session.centerHeader,
       );
       widget.onOpen(opened.bookingId);
     } on Object {

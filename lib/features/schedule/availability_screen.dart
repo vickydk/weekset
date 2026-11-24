@@ -40,7 +40,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
         accessToken: token,
         from: _rfc3339(now),
         to: _rfc3339(now.add(const Duration(days: 7))),
-        centerId: widget.session.selectedCenterId,
+        centerId: widget.session.centerHeader,
       );
       if (!mounted) return;
       setState(() {
@@ -153,7 +153,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
       await widget.session.api.replaceTemplate(
         accessToken: token,
         windows: windows,
-        centerId: widget.session.selectedCenterId,
+        centerId: widget.session.centerHeader,
       );
       await _load();
     } on Object catch (error) {
@@ -171,13 +171,13 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
           accessToken: token,
           startsAt: hour.startsAt!,
           endsAt: hour.endsAt!,
-          centerId: widget.session.selectedCenterId,
+          centerId: widget.session.centerHeader,
         );
       } else if (hour.id != null) {
         await widget.session.api.reopenHour(
           accessToken: token,
           id: hour.id!,
-          centerId: widget.session.selectedCenterId,
+          centerId: widget.session.centerHeader,
         );
       }
       await _load();

@@ -72,6 +72,14 @@ class _TimetableScreenState extends State<TimetableScreen> {
     _load();
   }
 
+  String? _branchId() {
+    final selected = widget.session.selectedBranchId;
+    if (selected != null && selected.isNotEmpty) return selected;
+    final membership = widget.session.profile?.activeMembership;
+    if (membership == null || membership.branches.isEmpty) return null;
+    return membership.branches.first.id;
+  }
+
   Future<void> _load() async {
     final token = widget.session.accessToken;
     if (token == null) return;
@@ -81,8 +89,8 @@ class _TimetableScreenState extends State<TimetableScreen> {
         accessToken: token,
         from: _stamp(now),
         to: _stamp(now.add(const Duration(days: 7))),
-        centerId: widget.session.selectedCenterId,
-        branchId: widget.session.selectedBranchId,
+        centerId: widget.session.centerHeader,
+        branchId: _branchId(),
       );
       if (!mounted) return;
       setState(() => _sessions = sessions);
