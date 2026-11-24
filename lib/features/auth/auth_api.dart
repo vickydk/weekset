@@ -557,6 +557,52 @@ class AuthApi {
     ];
   }
 
+  Future<List<AssignedClient>> trainerClients({
+    required String accessToken,
+    String? centerId,
+  }) async {
+    final response = await _authed(
+      'GET',
+      '/v1/solo-plans/clients',
+      accessToken,
+      centerId: centerId,
+    );
+    if (response.statusCode != 200) return const [];
+    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    return [
+      for (final raw in json['clients'] as List<dynamic>? ?? [])
+        AssignedClient(
+          id: (raw as Map<String, dynamic>)['user_id'] as String? ?? '',
+          name: raw['display_name'] as String? ?? '',
+        ),
+    ];
+  }
+
+  Future<void> assignSolo({
+    required String accessToken,
+    required String clientId,
+    required String planDate,
+    required String slug,
+    String? centerId,
+  }) async {
+    final response = await _authed(
+      'POST',
+      '/v1/solo-plans',
+      accessToken,
+      centerId: centerId,
+      body: {
+        'client_user_id': clientId,
+        'plan_date': planDate,
+        'items': [
+          {'slug': slug, 'sets': 3, 'reps': 8, 'rest_seconds': 60},
+        ],
+      },
+    );
+    if (response.statusCode != 201) {
+      throw AuthException(_errorMessage(response, 'check the plan'));
+    }
+  }
+
   Future<void> writeLog({
     required String accessToken,
     required String bookingId,

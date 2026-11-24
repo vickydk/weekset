@@ -15,6 +15,7 @@ class ExerciseScreen extends StatefulWidget {
 
 class _ExerciseScreenState extends State<ExerciseScreen> {
   List<Movement> _movements = const [];
+  List<AssignedClient> _clients = const [];
   Movement? _open;
 
   @override
@@ -28,11 +29,38 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     if (token == null) return;
     try {
       final movements = await widget.session.api.exercises(accessToken: token);
+      final clients = await widget.session.api.trainerClients(
+        accessToken: token,
+        centerId: widget.session.selectedCenterId,
+      );
       if (!mounted) return;
-      setState(() => _movements = movements);
+      setState(() {
+        _movements = movements;
+        _clients = clients;
+      });
     } on Object {
       if (!mounted) return;
       setState(() => _movements = const []);
+    }
+  }
+
+  Future<void> _assign(AssignedClient client) async {
+    final token = widget.session.accessToken;
+    final movement = _open;
+    if (token == null || movement == null) return;
+    final now = DateTime.now();
+    final date =
+        '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    try {
+      await widget.session.api.assignSolo(
+        accessToken: token,
+        clientId: client.id,
+        planDate: date,
+        slug: movement.slug,
+        centerId: widget.session.selectedCenterId,
+      );
+    } on Object {
+      return;
     }
   }
 
@@ -46,6 +74,11 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
         children: [
           if (open != null) ...[
             DemoLoop(name: open.name),
+            for (final client in _clients)
+              TextButton(
+                onPressed: () => _assign(client),
+                child: Text('Assign solo day to ${client.name}'),
+              ),
             const SizedBox(height: 16),
           ],
           Expanded(

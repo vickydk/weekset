@@ -17,6 +17,14 @@ class Movement {
   }
 }
 
+/// A client this trainer can give a solo day.
+class AssignedClient {
+  const AssignedClient({required this.id, required this.name});
+
+  final String id;
+  final String name;
+}
+
 /// A silent loop. It repeats and plays no sound.
 class DemoLoop extends StatefulWidget {
   const DemoLoop({required this.name, super.key});
