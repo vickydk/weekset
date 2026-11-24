@@ -108,6 +108,21 @@ class SessionController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Returns the error to show, or null when the code opened a center.
+  Future<String?> acceptCode(String code) async {
+    final access = accessToken;
+    if (access == null) return 'invite is not valid';
+    try {
+      await api.acceptInvite(code);
+      profile = await api.me(access);
+    } on AuthException catch (err) {
+      return err.message;
+    }
+    _open(profile!);
+    if (gate != Gate.shell) return 'invite is not valid';
+    return null;
+  }
+
   Future<void> addBranch(String name) async {
     final access = accessToken;
     if (access == null) return;

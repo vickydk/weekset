@@ -9,6 +9,7 @@ import '../../core/widgets/secondary_button.dart';
 import '../../core/widgets/suspended_screen.dart';
 import '../../core/widgets/week_mark.dart';
 import '../center/center_register_screen.dart';
+import '../people/people_screen.dart';
 import 'auth_api.dart';
 import 'login_screen.dart';
 import 'register_screen.dart';
@@ -42,7 +43,9 @@ class _AuthGateState extends State<AuthGate> {
           return const Scaffold(body: Center(child: WeekMark()));
         }
         if (session.gate == Gate.locked) {
-          if (_step == _Step.code) return const InviteCodeStub();
+          if (_step == _Step.code) {
+            return AcceptCodeScreen(session: session);
+          }
           return LockedScreen(
             onHaveCode: () => setState(() => _step = _Step.code),
             onSignOut: () {
@@ -86,7 +89,7 @@ class _AuthGateState extends State<AuthGate> {
             session: session,
           ),
           _Step.center => CenterRegisterScreen(session: session),
-          _Step.code => const InviteCodeStub(),
+          _Step.code => AcceptCodeScreen(session: session),
         };
       },
     );
@@ -112,6 +115,14 @@ class _RoleShellState extends State<RoleShell> {
     _branch.dispose();
     _inviteEmail.dispose();
     super.dispose();
+  }
+
+  void _openPeople(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => PeopleScreen(session: widget.session),
+      ),
+    );
   }
 
   @override
@@ -143,6 +154,20 @@ class _RoleShellState extends State<RoleShell> {
                 fontWeight: FontWeight.w600,
               ),
             ),
+            if (membership?.role == 'manager' ||
+                membership?.role == 'center_admin') ...[
+              const SizedBox(height: 24),
+              if (membership?.role == 'manager')
+                PrimaryButton(
+                  label: 'People',
+                  onPressed: () => _openPeople(context),
+                )
+              else
+                SecondaryButton(
+                  label: 'People',
+                  onPressed: () => _openPeople(context),
+                ),
+            ],
             if (membership?.role == 'center_admin') ...[
               const SizedBox(height: 24),
               for (final branch in branches)

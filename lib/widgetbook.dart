@@ -5,6 +5,7 @@ import 'core/theme/app_theme.dart';
 import 'core/widgets/app_shell.widgetbook.dart';
 import 'core/widgets/foundations.widgetbook.dart';
 import 'features/auth/auth.widgetbook.dart';
+import 'features/people/people.widgetbook.dart';
 
 /// Catalogue entry. Run with `flutter run -t lib/widgetbook.dart`.
 void main() {
@@ -34,6 +35,7 @@ class WidgetbookApp extends StatelessWidget {
         ),
         foundationsFolder(),
         authFolder(),
+        peopleFolder(),
       ],
       addons: [
         MaterialThemeAddon(

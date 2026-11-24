@@ -83,27 +83,3 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     );
   }
 }
-
-/// The invite ticket fills this form in.
-class InviteCodeStub extends StatelessWidget {
-  const InviteCodeStub({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Text(
-            'Join with code',
-            style: TextStyle(
-              color: AppColors.paper,
-              fontSize: 28,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}

@@ -115,6 +115,81 @@ class AuthException implements Exception {
   final String message;
 }
 
+class PersonRow {
+  const PersonRow({
+    required this.userId,
+    required this.displayName,
+    required this.email,
+    required this.role,
+    required this.status,
+    required this.branchId,
+    required this.branchName,
+    required this.trainerName,
+  });
+
+  final String userId;
+  final String displayName;
+  final String email;
+  final String role;
+  final String status;
+  final String branchId;
+  final String branchName;
+  final String trainerName;
+
+  factory PersonRow.fromJson(Map<String, dynamic> json) {
+    return PersonRow(
+      userId: json['user_id'] as String? ?? '',
+      displayName: json['display_name'] as String? ?? '',
+      email: json['email'] as String? ?? '',
+      role: json['role'] as String? ?? '',
+      status: json['status'] as String? ?? '',
+      branchId: json['branch_id'] as String? ?? '',
+      branchName: json['branch_name'] as String? ?? '',
+      trainerName: json['trainer_name'] as String? ?? '',
+    );
+  }
+}
+
+class OpenInvite {
+  const OpenInvite({
+    required this.email,
+    required this.role,
+    required this.branchName,
+  });
+
+  final String email;
+  final String role;
+  final String branchName;
+
+  factory OpenInvite.fromJson(Map<String, dynamic> json) {
+    return OpenInvite(
+      email: json['email'] as String? ?? '',
+      role: json['role'] as String? ?? '',
+      branchName: json['branch_name'] as String? ?? '',
+    );
+  }
+}
+
+class PeoplePage {
+  const PeoplePage({required this.people, required this.invites});
+
+  final List<PersonRow> people;
+  final List<OpenInvite> invites;
+
+  factory PeoplePage.fromJson(Map<String, dynamic> json) {
+    final people = json['people'] as List<dynamic>? ?? const [];
+    final invites = json['invites'] as List<dynamic>? ?? const [];
+    return PeoplePage(
+      people: people
+          .map((row) => PersonRow.fromJson(row as Map<String, dynamic>))
+          .toList(),
+      invites: invites
+          .map((row) => OpenInvite.fromJson(row as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}
+
 /// Talks to /v1/auth and /v1/me.
 class AuthApi {
   AuthApi({http.Client? client, String? baseUrl})
@@ -203,6 +278,138 @@ class AuthApi {
     return json['code'] as String? ?? '';
   }
 
+  Future<void> acceptInvite(String code) async {
+    final response = await _send('POST', '/v1/invites/accept', {'code': code});
+    if (response.statusCode == 204) return;
+    throw AuthException(_errorMessage(response, 'invite is not valid'));
+  }
+
+  Future<PeoplePage> people({
+    required String accessToken,
+    String? branchId,
+  }) async {
+    final response = await _authed(
+      'GET',
+      '/v1/people',
+      accessToken,
+      branchId: branchId,
+    );
+    if (response.statusCode != 200) {
+      throw const AuthException('unexpected error');
+    }
+    return PeoplePage.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
+  }
+
+  Future<String> invitePerson({
+    required String accessToken,
+    required String email,
+    required String role,
+    required String branchId,
+    String? headerBranchId,
+  }) async {
+    final response = await _authed(
+      'POST',
+      '/v1/invites',
+      accessToken,
+      branchId: headerBranchId,
+      body: {'email': email, 'role': role, 'branch_id': branchId},
+    );
+    if (response.statusCode != 201) {
+      throw AuthException(
+        _errorMessage(response, 'That person cannot be invited.'),
+      );
+    }
+    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    return json['code'] as String? ?? '';
+  }
+
+  Future<void> assignTrainer({
+    required String accessToken,
+    required String clientUserId,
+    required String trainerUserId,
+    String? branchId,
+  }) async {
+    final response = await _authed(
+      'POST',
+      '/v1/assignments',
+      accessToken,
+      branchId: branchId,
+      body: {'client_user_id': clientUserId, 'trainer_user_id': trainerUserId},
+    );
+    if (response.statusCode != 204) {
+      throw AuthException(
+        _errorMessage(response, 'That PT is not at this branch.'),
+      );
+    }
+  }
+
+  Future<void> suspendPerson({
+    required String accessToken,
+    required String userId,
+    String? branchId,
+  }) {
+    return _personAction(accessToken, userId, 'suspend', branchId);
+  }
+
+  Future<void> restorePerson({
+    required String accessToken,
+    required String userId,
+    String? branchId,
+  }) {
+    return _personAction(accessToken, userId, 'restore', branchId);
+  }
+
+  Future<void> removePerson({
+    required String accessToken,
+    required String userId,
+    String? branchId,
+  }) async {
+    final response = await _authed(
+      'DELETE',
+      '/v1/people/$userId',
+      accessToken,
+      branchId: branchId,
+    );
+    if (response.statusCode != 204) {
+      throw const AuthException('That person cannot be removed.');
+    }
+  }
+
+  Future<void> replaceManagerBranches({
+    required String accessToken,
+    required String userId,
+    required List<String> branchIds,
+  }) async {
+    final response = await _authed(
+      'PATCH',
+      '/v1/people/$userId',
+      accessToken,
+      body: {'branch_ids': branchIds},
+    );
+    if (response.statusCode != 204) {
+      throw const AuthException('Those branches cannot be saved.');
+    }
+  }
+
+  Future<void> _personAction(
+    String accessToken,
+    String userId,
+    String action,
+    String? branchId,
+  ) async {
+    final response = await _authed(
+      'POST',
+      '/v1/people/$userId/$action',
+      accessToken,
+      branchId: branchId,
+    );
+    if (response.statusCode != 204) {
+      throw const AuthException('That change was not allowed.');
+    }
+  }
+
   Future<AuthSession> login({required String email, required String password}) {
     return _session('POST', '/v1/auth/login', {
       'email': email,
@@ -268,5 +475,38 @@ class AuthApi {
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(body),
     );
+  }
+
+  Future<http.Response> _authed(
+    String method,
+    String path,
+    String accessToken, {
+    String? branchId,
+    Object? body,
+  }) {
+    final headers = {
+      'Authorization': 'Bearer $accessToken',
+      if (body != null) 'Content-Type': 'application/json',
+      if (branchId != null && branchId.isNotEmpty) 'X-Weekset-Branch': branchId,
+    };
+    final uri = Uri.parse('$baseUrl$path');
+    return switch (method) {
+      'GET' => _client.get(uri, headers: headers),
+      'DELETE' => _client.delete(uri, headers: headers),
+      'PATCH' => _client.patch(uri, headers: headers, body: jsonEncode(body)),
+      _ => _client.post(uri, headers: headers, body: jsonEncode(body)),
+    };
+  }
+
+  String _errorMessage(http.Response response, String fallback) {
+    try {
+      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      final error = json['error'] as Map<String, dynamic>?;
+      final message = error?['message'] as String?;
+      if (message != null && message.isNotEmpty) return message;
+    } on Object {
+      // The fallback is safe to show.
+    }
+    return fallback;
   }
 }

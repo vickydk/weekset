@@ -9,6 +9,7 @@ import 'package:weekset/core/widgets/suspended_screen.dart';
 import 'package:weekset/features/auth/auth_api.dart';
 import 'package:weekset/features/auth/auth_gate.dart';
 import 'package:weekset/features/auth/token_store.dart';
+import 'package:weekset/features/people/people_views.dart';
 
 void main() {
   testWidgets('opens on the welcome screen', (tester) async {
@@ -47,6 +48,10 @@ void main() {
     expect(find.byType(LockedScreen), findsOneWidget);
     expect(find.byType(RoleShell), findsNothing);
     expect(find.text('I have a code'), findsOneWidget);
+
+    await tester.tap(find.text('I have a code'));
+    await tester.pumpAndSettle();
+    expect(find.text('Join with code'), findsOneWidget);
   });
 
   testWidgets('a 390-wide locked frame stays inside the safe area', (
@@ -136,6 +141,43 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('That email or password is not right.'), findsOneWidget);
     expect(find.byType(RoleShell), findsNothing);
+  });
+
+  testWidgets('people list names a client without a PT', (tester) async {
+    await _pumpPhone(
+      tester,
+      PeopleListView(
+        includeManagers: true,
+        onInvite: () {},
+        onOpen: (_) {},
+        people: const [
+          PersonRow(
+            userId: 'maya',
+            displayName: 'Maya Chen',
+            email: 'maya@harbor.club',
+            role: 'client',
+            status: 'active',
+            branchId: 'downtown',
+            branchName: 'Downtown',
+            trainerName: '',
+          ),
+        ],
+        invites: const [],
+      ),
+    );
+    expect(find.text('PT not assigned.'), findsOneWidget);
+    expect(find.text('Clients'), findsOneWidget);
+  });
+
+  testWidgets('an invalid code is shown on the join form', (tester) async {
+    await _pumpPhone(
+      tester,
+      Scaffold(
+        body: AcceptCodeForm(error: 'invite is not valid', onSubmit: () {}),
+      ),
+    );
+    expect(find.text('invite is not valid'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }
 
