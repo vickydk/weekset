@@ -130,12 +130,14 @@ class HomeDashboard extends StatelessWidget {
     required this.card,
     required this.onPrimary,
     this.onDecide,
+    this.onLog,
     super.key,
   });
 
   final HomeCard card;
   final VoidCallback onPrimary;
   final void Function(HomeSession session, String action)? onDecide;
+  final ValueChanged<HomeSession>? onLog;
 
   @override
   Widget build(BuildContext context) {
@@ -204,6 +206,14 @@ class HomeDashboard extends StatelessWidget {
                         child: const Text('Decline'),
                       ),
                     ],
+                  ),
+                if (onLog != null &&
+                    (session.status == SessionStatus.confirmed ||
+                        session.status == SessionStatus.requested ||
+                        session.status == SessionStatus.completed))
+                  TextButton(
+                    onPressed: () => onLog!(session),
+                    child: const Text('Write the log'),
                   ),
               ],
             ),

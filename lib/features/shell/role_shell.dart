@@ -139,6 +139,69 @@ class _RoleShellState extends State<RoleShell> {
     });
   }
 
+  Future<void> _writeLog(HomeSession session) async {
+    final note = TextEditingController();
+    final exercise = TextEditingController(text: 'squat');
+    final reps = TextEditingController(text: '5');
+    final load = TextEditingController(text: '40');
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: AppColors.card,
+          title: const Text(
+            'Session log',
+            style: TextStyle(color: AppColors.paper),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AppTextField(
+                label: 'Note',
+                hint: 'How it went',
+                controller: note,
+              ),
+              AppTextField(
+                label: 'Exercise',
+                hint: 'squat',
+                controller: exercise,
+              ),
+              AppTextField(label: 'Reps', hint: '5', controller: reps),
+              AppTextField(label: 'Load kg', hint: '40', controller: load),
+            ],
+          ),
+          actions: [
+            PrimaryButton(
+              label: 'Save log',
+              onPressed: () => Navigator.pop(context, true),
+            ),
+          ],
+        );
+      },
+    );
+    final token = widget.session.accessToken;
+    if (saved == true && token != null && session.id.isNotEmpty) {
+      try {
+        await widget.session.api.writeLog(
+          accessToken: token,
+          bookingId: session.id,
+          note: note.text,
+          exercise: exercise.text,
+          reps: int.tryParse(reps.text) ?? 0,
+          load: load.text,
+          centerId: _membership?.fitnessCenterId,
+        );
+        await _load();
+      } on AuthException {
+        await _load();
+      }
+    }
+    note.dispose();
+    exercise.dispose();
+    reps.dispose();
+    load.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -200,6 +263,7 @@ class _RoleShellState extends State<RoleShell> {
         card: card,
         onPrimary: () => _select(_actionPath(membership?.role)),
         onDecide: membership?.role == 'trainer' ? _decide : null,
+        onLog: membership?.role == 'trainer' ? _writeLog : null,
       ),
       AppRouter.managerPeople || AppRouter.centerPeople => PeopleScreen(
         session: widget.session,

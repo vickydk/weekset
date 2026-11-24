@@ -543,6 +543,37 @@ class AuthApi {
     return Notice.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
   }
 
+  Future<void> writeLog({
+    required String accessToken,
+    required String bookingId,
+    required String note,
+    required String exercise,
+    required int reps,
+    required String load,
+    String? centerId,
+  }) async {
+    final response = await _authed(
+      'PUT',
+      '/v1/bookings/$bookingId/log',
+      accessToken,
+      centerId: centerId,
+      body: {
+        'note': note,
+        'exercises': [
+          {
+            'name': exercise,
+            'sets': [
+              {'reps': reps, 'load': load, 'unit': 'kg'},
+            ],
+          },
+        ],
+      },
+    );
+    if (response.statusCode != 200) {
+      throw AuthException(_errorMessage(response, 'check the session'));
+    }
+  }
+
   Future<PeoplePage> people({
     required String accessToken,
     String? branchId,
