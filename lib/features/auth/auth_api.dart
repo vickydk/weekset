@@ -7,6 +7,7 @@ import '../schedule/availability_week.dart';
 import '../schedule/client_week.dart';
 import '../schedule/inbox.dart';
 import '../schedule/session_log.dart';
+import '../exercise/exercise_library.dart';
 
 /// The signed-in person. Memberships decide whether a menu opens.
 class Profile {
@@ -542,6 +543,18 @@ class AuthApi {
       throw const AuthException('unexpected error');
     }
     return Notice.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+  }
+
+  Future<List<Movement>> exercises({required String accessToken}) async {
+    final response = await _authed('GET', '/v1/exercises', accessToken);
+    if (response.statusCode != 200) {
+      throw const AuthException('unexpected error');
+    }
+    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    return [
+      for (final raw in json['exercises'] as List<dynamic>? ?? [])
+        Movement.fromJson(raw as Map<String, dynamic>),
+    ];
   }
 
   Future<void> writeLog({

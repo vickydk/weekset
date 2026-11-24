@@ -11,6 +11,8 @@ import '../../core/widgets/primary_button.dart';
 import '../../core/widgets/secondary_button.dart';
 import '../auth/auth_api.dart';
 import '../auth/session_controller.dart';
+import '../exercise/exercise_library.dart';
+import '../exercise/exercise_screen.dart';
 import '../home/home_card.dart';
 import '../people/people_screen.dart';
 import '../schedule/availability_screen.dart';
@@ -279,6 +281,13 @@ class _RoleShellState extends State<RoleShell> {
                 child: AvailabilityWeek(hours: []),
               )
             : AvailabilityScreen(session: widget.session),
+      AppRouter.trainerClients =>
+        widget.preview != null
+            ? const Padding(
+                padding: EdgeInsets.all(24),
+                child: ExerciseLibrary(movements: []),
+              )
+            : ExerciseScreen(session: widget.session),
       AppRouter.clientSchedule =>
         widget.preview != null
             ? const Padding(
