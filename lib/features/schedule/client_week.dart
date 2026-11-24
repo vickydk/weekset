@@ -15,6 +15,7 @@ class WeekBooking {
     required this.status,
     required this.startsAt,
     required this.endsAt,
+    this.seriesId = '',
   });
 
   final String id;
@@ -23,6 +24,7 @@ class WeekBooking {
   final SessionStatus status;
   final String startsAt;
   final String endsAt;
+  final String seriesId;
 
   factory WeekBooking.fromJson(Map<String, dynamic> json) {
     final raw = json['status'] as String? ?? 'requested';
@@ -38,6 +40,7 @@ class WeekBooking {
       status: SessionStatus.values.byName(raw),
       startsAt: json['starts_at'] as String? ?? '',
       endsAt: json['ends_at'] as String? ?? '',
+      seriesId: json['series_id'] as String? ?? '',
     );
   }
 }
@@ -57,12 +60,16 @@ class ClientWeek extends StatelessWidget {
     required this.open,
     required this.bookings,
     this.onRequest,
+    this.onRepeat,
+    this.onSkip,
     super.key,
   });
 
   final List<HourSlot> open;
   final List<WeekBooking> bookings;
   final ValueChanged<HourSlot>? onRequest;
+  final ValueChanged<HourSlot>? onRepeat;
+  final ValueChanged<WeekBooking>? onSkip;
 
   @override
   Widget build(BuildContext context) {
@@ -106,6 +113,11 @@ class ClientWeek extends StatelessWidget {
                         'Open',
                         style: TextStyle(color: AppColors.muted, fontSize: 14),
                       ),
+                      if (onRepeat != null)
+                        TextButton(
+                          onPressed: () => onRepeat!(hour),
+                          child: const Text('Repeat for 8 weeks'),
+                        ),
                     ],
                   ),
                 ),
@@ -121,6 +133,17 @@ class ClientWeek extends StatelessWidget {
               status: booking.status,
             ),
           ),
+        if (onSkip != null)
+          for (final booking in bookings)
+            if (booking.seriesId.isNotEmpty &&
+                booking.status == SessionStatus.requested)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  onPressed: () => onSkip!(booking),
+                  child: Text('Skip ${booking.time}'),
+                ),
+              ),
       ],
     );
   }

@@ -426,6 +426,42 @@ class AuthApi {
     }
   }
 
+  Future<void> repeatBooking({
+    required String accessToken,
+    required String startsAt,
+    required String endsAt,
+    String? centerId,
+  }) async {
+    final response = await _authed(
+      'POST',
+      '/v1/booking-series',
+      accessToken,
+      centerId: centerId,
+      body: {'starts_at': startsAt, 'ends_at': endsAt},
+    );
+    if (response.statusCode != 201) {
+      throw AuthException(_errorMessage(response, 'hour is already booked'));
+    }
+  }
+
+  Future<void> skipOccurrence({
+    required String accessToken,
+    required String seriesId,
+    required String occurrenceOn,
+    String? centerId,
+  }) async {
+    final response = await _authed(
+      'POST',
+      '/v1/booking-series/$seriesId/skip',
+      accessToken,
+      centerId: centerId,
+      body: {'occurrence_on': occurrenceOn},
+    );
+    if (response.statusCode != 204) {
+      throw AuthException(_errorMessage(response, 'check the hours'));
+    }
+  }
+
   Future<void> decideBooking({
     required String accessToken,
     required String id,

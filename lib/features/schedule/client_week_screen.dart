@@ -74,6 +74,44 @@ class _ClientWeekScreenState extends State<ClientWeekScreen> {
     }
   }
 
+  Future<void> _repeat(HourSlot hour) async {
+    final token = widget.session.accessToken;
+    if (token == null || hour.startsAt == null || hour.endsAt == null) return;
+    try {
+      await widget.session.api.repeatBooking(
+        accessToken: token,
+        startsAt: hour.startsAt!,
+        endsAt: hour.endsAt!,
+        centerId: widget.session.selectedCenterId,
+      );
+      await _load();
+    } on Object catch (error) {
+      if (!mounted) return;
+      setState(() => _error = error.toString());
+    }
+  }
+
+  Future<void> _skip(WeekBooking booking) async {
+    final token = widget.session.accessToken;
+    if (token == null || booking.seriesId.isEmpty) return;
+    final parsed = DateTime.tryParse(booking.startsAt);
+    if (parsed == null) return;
+    final day =
+        '${parsed.toUtc().year.toString().padLeft(4, '0')}-${parsed.toUtc().month.toString().padLeft(2, '0')}-${parsed.toUtc().day.toString().padLeft(2, '0')}';
+    try {
+      await widget.session.api.skipOccurrence(
+        accessToken: token,
+        seriesId: booking.seriesId,
+        occurrenceOn: day,
+        centerId: widget.session.selectedCenterId,
+      );
+      await _load();
+    } on Object catch (error) {
+      if (!mounted) return;
+      setState(() => _error = error.toString());
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -94,6 +132,8 @@ class _ClientWeekScreenState extends State<ClientWeekScreen> {
               open: _open,
               bookings: _bookings,
               onRequest: _request,
+              onRepeat: _repeat,
+              onSkip: _skip,
             ),
           ),
         ],
