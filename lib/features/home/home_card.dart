@@ -98,8 +98,10 @@ class HomeSession {
     required this.time,
     required this.title,
     required this.status,
+    this.id = '',
   });
 
+  final String id;
   final String time;
   final String title;
   final SessionStatus status;
@@ -115,6 +117,7 @@ class HomeSession {
     final client = json['client_name'] as String? ?? '';
     final trainer = json['trainer_name'] as String? ?? '';
     return HomeSession(
+      id: json['id'] as String? ?? '',
       time: json['time'] as String? ?? '',
       title: client.isEmpty ? trainer : client,
       status: status,
@@ -123,10 +126,16 @@ class HomeSession {
 }
 
 class HomeDashboard extends StatelessWidget {
-  const HomeDashboard({required this.card, required this.onPrimary, super.key});
+  const HomeDashboard({
+    required this.card,
+    required this.onPrimary,
+    this.onDecide,
+    super.key,
+  });
 
   final HomeCard card;
   final VoidCallback onPrimary;
+  final void Function(HomeSession session, String action)? onDecide;
 
   @override
   Widget build(BuildContext context) {
@@ -156,27 +165,46 @@ class HomeDashboard extends StatelessWidget {
         for (final session in card.sessions)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  session.time,
-                  style: const TextStyle(
-                    color: AppColors.paper,
-                    fontSize: 28,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    session.title,
-                    style: const TextStyle(
-                      color: AppColors.paper,
-                      fontSize: 16,
+                Row(
+                  children: [
+                    Text(
+                      session.time,
+                      style: const TextStyle(
+                        color: AppColors.paper,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        session.title,
+                        style: const TextStyle(
+                          color: AppColors.paper,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                    StatusChip(status: session.status),
+                  ],
                 ),
-                StatusChip(status: session.status),
+                if (onDecide != null &&
+                    session.status == SessionStatus.requested)
+                  Row(
+                    children: [
+                      TextButton(
+                        onPressed: () => onDecide!(session, 'confirm'),
+                        child: const Text('Confirm'),
+                      ),
+                      TextButton(
+                        onPressed: () => onDecide!(session, 'decline'),
+                        child: const Text('Decline'),
+                      ),
+                    ],
+                  ),
               ],
             ),
           ),

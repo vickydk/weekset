@@ -26,10 +26,15 @@ class WeekBooking {
 
   factory WeekBooking.fromJson(Map<String, dynamic> json) {
     final raw = json['status'] as String? ?? 'requested';
+    final client = json['client_name'] as String? ?? '';
+    final trainer = json['trainer_name'] as String? ?? '';
+    final title = client.isNotEmpty && trainer.isNotEmpty
+        ? '$client · $trainer'
+        : (trainer.isNotEmpty ? trainer : 'Session');
     return WeekBooking(
       id: json['id'] as String? ?? '',
       time: _clock(json['starts_at'] as String? ?? ''),
-      title: json['trainer_name'] as String? ?? 'Session',
+      title: title,
       status: SessionStatus.values.byName(raw),
       startsAt: json['starts_at'] as String? ?? '',
       endsAt: json['ends_at'] as String? ?? '',

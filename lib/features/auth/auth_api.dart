@@ -426,6 +426,49 @@ class AuthApi {
     }
   }
 
+  Future<void> decideBooking({
+    required String accessToken,
+    required String id,
+    required String action,
+    String? centerId,
+    String? branchId,
+  }) async {
+    final response = await _authed(
+      'POST',
+      '/v1/bookings/$id/$action',
+      accessToken,
+      centerId: centerId,
+      branchId: branchId,
+    );
+    if (response.statusCode != 200) {
+      throw AuthException(_errorMessage(response, 'check the hours'));
+    }
+  }
+
+  Future<List<WeekBooking>> timetable({
+    required String accessToken,
+    required String from,
+    required String to,
+    String? centerId,
+    String? branchId,
+  }) async {
+    final response = await _authed(
+      'GET',
+      '/v1/timetable?from=$from&to=$to',
+      accessToken,
+      centerId: centerId,
+      branchId: branchId,
+    );
+    if (response.statusCode != 200) {
+      throw AuthException(_errorMessage(response, 'unexpected error'));
+    }
+    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    return [
+      for (final raw in json['sessions'] as List<dynamic>? ?? [])
+        WeekBooking.fromJson(raw as Map<String, dynamic>),
+    ];
+  }
+
   Future<PeoplePage> people({
     required String accessToken,
     String? branchId,

@@ -17,6 +17,7 @@ import '../schedule/availability_screen.dart';
 import '../schedule/availability_week.dart';
 import '../schedule/client_week.dart';
 import '../schedule/client_week_screen.dart';
+import '../schedule/timetable.dart';
 
 /// One shell for the active role. Another role's path is sent home first.
 class RoleShell extends StatefulWidget {
@@ -109,6 +110,24 @@ class _RoleShellState extends State<RoleShell> {
     setState(() => _path = AppRouter.coerce(role, path));
   }
 
+  Future<void> _decide(HomeSession session, String action) async {
+    final token = widget.session.accessToken;
+    final membership = _membership;
+    if (token == null || session.id.isEmpty || membership == null) return;
+    try {
+      await widget.session.api.decideBooking(
+        accessToken: token,
+        id: session.id,
+        action: action,
+        centerId: membership.fitnessCenterId,
+        branchId: membership.role == 'manager' ? _branchId(membership) : null,
+      );
+      await _load();
+    } on AuthException {
+      await _load();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -169,6 +188,7 @@ class _RoleShellState extends State<RoleShell> {
       AppRouter.centerToday => HomeDashboard(
         card: card,
         onPrimary: () => _select(_actionPath(membership?.role)),
+        onDecide: membership?.role == 'trainer' ? _decide : null,
       ),
       AppRouter.managerPeople || AppRouter.centerPeople => PeopleScreen(
         session: widget.session,
@@ -190,6 +210,13 @@ class _RoleShellState extends State<RoleShell> {
                 child: ClientWeek(open: [], bookings: []),
               )
             : ClientWeekScreen(session: widget.session),
+      AppRouter.managerSchedule =>
+        widget.preview != null
+            ? const Padding(
+                padding: EdgeInsets.all(24),
+                child: TimetableList(sessions: []),
+              )
+            : TimetableScreen(session: widget.session),
       AppRouter.clientProfile ||
       AppRouter.trainerProfile ||
       AppRouter.centerProfile => _profile(membership),
