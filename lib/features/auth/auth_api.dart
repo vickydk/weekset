@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../home/home_card.dart';
+import '../schedule/availability_week.dart';
 
 /// The signed-in person. Memberships decide whether a menu opens.
 class Profile {
@@ -304,6 +305,86 @@ class AuthApi {
     return HomeCard.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
   }
 
+  Future<AvailabilityPage> availability({
+    required String accessToken,
+    required String from,
+    required String to,
+    String? centerId,
+  }) async {
+    final response = await _authed(
+      'GET',
+      '/v1/availability?from=$from&to=$to',
+      accessToken,
+      centerId: centerId,
+    );
+    if (response.statusCode != 200) {
+      throw AuthException(_errorMessage(response, 'unexpected error'));
+    }
+    return AvailabilityPage.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
+  }
+
+  Future<void> replaceTemplate({
+    required String accessToken,
+    required List<TemplateWindow> windows,
+    String? centerId,
+  }) async {
+    final response = await _authed(
+      'PUT',
+      '/v1/availability/template',
+      accessToken,
+      centerId: centerId,
+      body: {
+        'windows': [
+          for (final window in windows)
+            {
+              'weekday': window.weekday,
+              'local_start': window.localStart,
+              'local_end': window.localEnd,
+            },
+        ],
+      },
+    );
+    if (response.statusCode != 204) {
+      throw AuthException(_errorMessage(response, 'check the hours'));
+    }
+  }
+
+  Future<void> closeHour({
+    required String accessToken,
+    required String startsAt,
+    required String endsAt,
+    String? centerId,
+  }) async {
+    final response = await _authed(
+      'POST',
+      '/v1/availability/exceptions',
+      accessToken,
+      centerId: centerId,
+      body: {'starts_at': startsAt, 'ends_at': endsAt},
+    );
+    if (response.statusCode != 201) {
+      throw AuthException(_errorMessage(response, 'check the hours'));
+    }
+  }
+
+  Future<void> reopenHour({
+    required String accessToken,
+    required String id,
+    String? centerId,
+  }) async {
+    final response = await _authed(
+      'DELETE',
+      '/v1/availability/exceptions/$id',
+      accessToken,
+      centerId: centerId,
+    );
+    if (response.statusCode != 204) {
+      throw AuthException(_errorMessage(response, 'check the hours'));
+    }
+  }
+
   Future<PeoplePage> people({
     required String accessToken,
     String? branchId,
@@ -516,6 +597,7 @@ class AuthApi {
       'GET' => _client.get(uri, headers: headers),
       'DELETE' => _client.delete(uri, headers: headers),
       'PATCH' => _client.patch(uri, headers: headers, body: jsonEncode(body)),
+      'PUT' => _client.put(uri, headers: headers, body: jsonEncode(body)),
       _ => _client.post(uri, headers: headers, body: jsonEncode(body)),
     };
   }
