@@ -6,6 +6,7 @@ import '../home/home_card.dart';
 import '../schedule/availability_week.dart';
 import '../schedule/client_week.dart';
 import '../schedule/inbox.dart';
+import '../schedule/session_log.dart';
 
 /// The signed-in person. Memberships decide whether a menu opens.
 class Profile {
@@ -572,6 +573,25 @@ class AuthApi {
     if (response.statusCode != 200) {
       throw AuthException(_errorMessage(response, 'check the session'));
     }
+  }
+
+  Future<SessionLogView> readLog({
+    required String accessToken,
+    required String bookingId,
+    String? centerId,
+  }) async {
+    final response = await _authed(
+      'GET',
+      '/v1/bookings/$bookingId/log',
+      accessToken,
+      centerId: centerId,
+    );
+    if (response.statusCode != 200) {
+      throw AuthException(_errorMessage(response, 'not found'));
+    }
+    return SessionLogView.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
   }
 
   Future<PeoplePage> people({

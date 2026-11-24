@@ -17,6 +17,7 @@ import '../schedule/availability_screen.dart';
 import '../schedule/availability_week.dart';
 import '../schedule/client_week.dart';
 import '../schedule/client_week_screen.dart';
+import '../schedule/history_screen.dart';
 import '../schedule/inbox.dart';
 import '../schedule/timetable.dart';
 
@@ -285,6 +286,17 @@ class _RoleShellState extends State<RoleShell> {
                 child: ClientWeek(open: [], bookings: []),
               )
             : ClientWeekScreen(session: widget.session),
+      AppRouter.clientHistory =>
+        widget.preview != null
+            ? const Padding(
+                padding: EdgeInsets.all(24),
+                child: EmptyState(
+                  title: 'No sessions yet',
+                  message:
+                      'A finished hour shows its note, sets, and load here.',
+                ),
+              )
+            : HistoryScreen(session: widget.session),
       AppRouter.managerSchedule =>
         widget.preview != null
             ? const Padding(
