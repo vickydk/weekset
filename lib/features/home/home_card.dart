@@ -16,6 +16,7 @@ class HomeCard {
     this.branchName = '',
     this.sessions = const [],
     this.attention = const [],
+    this.solo,
   });
 
   final String question;
@@ -26,6 +27,7 @@ class HomeCard {
   final String primaryAction;
   final List<HomeSession> sessions;
   final List<String> attention;
+  final SoloDay? solo;
 
   bool get isEmpty =>
       sessions.isEmpty && attention.isEmpty && emptyTitle.isNotEmpty;
@@ -47,6 +49,9 @@ class HomeCard {
           .map((row) => (row as Map<String, dynamic>)['label'] as String? ?? '')
           .where((label) => label.isNotEmpty)
           .toList(),
+      solo: json['solo'] is Map<String, dynamic>
+          ? SoloDay.fromJson(json['solo'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -90,6 +95,20 @@ class HomeCard {
         primaryAction: 'See open hours',
       ),
     };
+  }
+}
+
+class SoloDay {
+  const SoloDay({required this.count, required this.first});
+
+  final int count;
+  final String first;
+
+  factory SoloDay.fromJson(Map<String, dynamic> json) {
+    return SoloDay(
+      count: json['count'] as int? ?? 0,
+      first: json['first'] as String? ?? '',
+    );
   }
 }
 
@@ -153,6 +172,21 @@ class HomeDashboard extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
+        if (card.solo != null) ...[
+          Text(
+            card.solo!.first,
+            style: const TextStyle(
+              color: AppColors.paper,
+              fontSize: 28,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          Text(
+            '${card.solo!.count} movements',
+            style: const TextStyle(color: AppColors.muted, fontSize: 14),
+          ),
+          const SizedBox(height: 16),
+        ],
         if (card.attention.isNotEmpty)
           for (final label in card.attention)
             Padding(
