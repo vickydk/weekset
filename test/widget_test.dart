@@ -6,12 +6,47 @@ import 'package:weekset/core/widgets/locked_screen.dart';
 import 'package:weekset/core/widgets/option_switcher.dart';
 import 'package:weekset/core/widgets/status_chip.dart';
 import 'package:weekset/core/widgets/suspended_screen.dart';
+import 'package:weekset/features/auth/auth_api.dart';
+import 'package:weekset/features/auth/auth_gate.dart';
+import 'package:weekset/features/auth/token_store.dart';
 
 void main() {
-  testWidgets('shows the empty Weekset shell', (tester) async {
-    await tester.pumpWidget(const WeeksetApp());
+  testWidgets('opens on the welcome screen', (tester) async {
+    await tester.pumpWidget(
+      WeeksetApp(api: _FakeApi(), tokens: MemoryTokenStore()),
+    );
+    await tester.pumpAndSettle();
 
-    expect(find.text('Weekset'), findsOneWidget);
+    expect(find.text('Your week, with your trainer.'), findsOneWidget);
+  });
+
+  testWidgets('register with empty memberships does not build a shell', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      WeeksetApp(api: _FakeApi(), tokens: MemoryTokenStore()),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Create account'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Client'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.widgetWithText(TextField, 'Maya Chen'), 'Maya');
+    await tester.enterText(
+      find.widgetWithText(TextField, 'maya@harbor.club').at(0),
+      'maya@harbor.club',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextField, 'At least 8 characters'),
+      'long-enough',
+    );
+    await tester.tap(find.text('Create account').last);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(LockedScreen), findsOneWidget);
+    expect(find.byType(RoleShell), findsNothing);
+    expect(find.text('I have a code'), findsOneWidget);
   });
 
   testWidgets('a 390-wide locked frame stays inside the safe area', (
@@ -82,6 +117,26 @@ void main() {
     );
     expect(find.text('Current'), findsOneWidget);
   });
+
+  testWidgets('a wrong password shows the same login error', (tester) async {
+    final api = _FakeApi()..failLogin = true;
+    await tester.pumpWidget(WeeksetApp(api: api, tokens: MemoryTokenStore()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Continue with email'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextField, 'maya@harbor.club'),
+      'maya@harbor.club',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Password'),
+      'nope-nope',
+    );
+    await tester.tap(find.widgetWithText(FilledButton, 'Log in'));
+    await tester.pumpAndSettle();
+    expect(find.text('That email or password is not right.'), findsOneWidget);
+    expect(find.byType(RoleShell), findsNothing);
+  });
 }
 
 Future<void> _pumpPhone(WidgetTester tester, Widget child) async {
@@ -90,4 +145,51 @@ Future<void> _pumpPhone(WidgetTester tester, Widget child) async {
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
   await tester.pumpWidget(MaterialApp(theme: AppTheme.dark(), home: child));
+}
+
+class _FakeApi extends AuthApi {
+  _FakeApi() : super(baseUrl: 'http://example.test');
+
+  bool failLogin = false;
+
+  @override
+  Future<AuthSession> register({
+    required String email,
+    required String password,
+    required String displayName,
+    required String accountType,
+  }) async {
+    return AuthSession(
+      accessToken: 'access',
+      refreshToken: 'refresh',
+      profile: Profile(
+        id: 'user',
+        email: email,
+        displayName: displayName,
+        accountType: accountType,
+        memberships: const [],
+      ),
+    );
+  }
+
+  @override
+  Future<AuthSession> login({
+    required String email,
+    required String password,
+  }) async {
+    if (failLogin) {
+      throw const AuthException('That email or password is not right.');
+    }
+    return AuthSession(
+      accessToken: 'access',
+      refreshToken: 'refresh',
+      profile: Profile(
+        id: 'user',
+        email: email,
+        displayName: 'Maya',
+        accountType: 'client',
+        memberships: const [],
+      ),
+    );
+  }
 }

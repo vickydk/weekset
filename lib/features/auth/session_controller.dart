@@ -1,0 +1,109 @@
+import 'package:flutter/foundation.dart';
+
+import 'auth_api.dart';
+import 'token_store.dart';
+
+enum Gate { loading, welcome, locked, suspended, shell }
+
+/// Decides welcome, locked, suspended, or a role shell from /v1/me.
+class SessionController extends ChangeNotifier {
+  SessionController({required this.api, required this.tokens});
+
+  final AuthApi api;
+  final TokenStore tokens;
+
+  Gate gate = Gate.loading;
+  Profile? profile;
+  String? error;
+  String? _refresh;
+
+  Future<void> restore() async {
+    final stored = await tokens.read();
+    if (stored == null) {
+      gate = Gate.welcome;
+      notifyListeners();
+      return;
+    }
+    _refresh = stored.refresh;
+    try {
+      profile = await api.me(stored.access);
+    } on AuthException {
+      try {
+        final session = await api.refresh(stored.refresh);
+        await _keep(session);
+        profile = session.profile;
+      } on AuthException {
+        await tokens.clear();
+        gate = Gate.welcome;
+        notifyListeners();
+        return;
+      }
+    }
+    _open(profile!);
+  }
+
+  Future<void> register({
+    required String email,
+    required String password,
+    required String displayName,
+    required String accountType,
+  }) async {
+    error = null;
+    final session = await api.register(
+      email: email,
+      password: password,
+      displayName: displayName,
+      accountType: accountType,
+    );
+    await _keep(session);
+    _open(session.profile);
+  }
+
+  Future<void> login({required String email, required String password}) async {
+    error = null;
+    try {
+      final session = await api.login(email: email, password: password);
+      await _keep(session);
+      _open(session.profile);
+    } on AuthException catch (err) {
+      error = err.message;
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  Future<void> signOut() async {
+    final refresh = _refresh;
+    await tokens.clear();
+    _refresh = null;
+    profile = null;
+    gate = Gate.welcome;
+    notifyListeners();
+    if (refresh != null) {
+      try {
+        await api.logout(refresh);
+      } on AuthException {
+        // Local sign-out already happened.
+      }
+    }
+  }
+
+  Future<void> _keep(AuthSession session) async {
+    _refresh = session.refreshToken;
+    await tokens.write(
+      StoredTokens(access: session.accessToken, refresh: session.refreshToken),
+    );
+  }
+
+  void _open(Profile next) {
+    profile = next;
+    if (!next.hasActiveMembership && next.onlySuspended) {
+      gate = Gate.suspended;
+    } else if (!next.hasActiveMembership) {
+      gate = Gate.locked;
+    } else {
+      gate = Gate.shell;
+    }
+    notifyListeners();
+  }
+}
