@@ -17,6 +17,7 @@ import '../schedule/availability_screen.dart';
 import '../schedule/availability_week.dart';
 import '../schedule/client_week.dart';
 import '../schedule/client_week_screen.dart';
+import '../schedule/inbox.dart';
 import '../schedule/timetable.dart';
 
 /// One shell for the active role. Another role's path is sent home first.
@@ -126,6 +127,16 @@ class _RoleShellState extends State<RoleShell> {
     } on AuthException {
       await _load();
     }
+  }
+
+  void _openNotice(String bookingId) {
+    final role = _membership?.role;
+    if (bookingId.isEmpty) return;
+    setState(() {
+      _path = role == 'trainer'
+          ? AppRouter.trainerToday
+          : AppRouter.clientSchedule;
+    });
   }
 
   @override
@@ -341,10 +352,13 @@ class _RoleShellState extends State<RoleShell> {
                 SwitcherOption(id: row.fitnessCenterId, title: row.centerName),
             ],
           ),
-        const EmptyState(
-          title: 'No updates',
-          message: 'Notifications stay in the app.',
-        ),
+        const SizedBox(height: 12),
+        widget.preview != null
+            ? const EmptyState(
+                title: 'No updates',
+                message: 'Notifications stay in the app.',
+              )
+            : InboxPanel(session: widget.session, onOpen: _openNotice),
         const SizedBox(height: 16),
         SecondaryButton(label: 'Sign out', onPressed: widget.session.signOut),
       ],

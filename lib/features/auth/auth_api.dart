@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import '../home/home_card.dart';
 import '../schedule/availability_week.dart';
 import '../schedule/client_week.dart';
+import '../schedule/inbox.dart';
 
 /// The signed-in person. Memberships decide whether a menu opens.
 class Profile {
@@ -503,6 +504,43 @@ class AuthApi {
       for (final raw in json['sessions'] as List<dynamic>? ?? [])
         WeekBooking.fromJson(raw as Map<String, dynamic>),
     ];
+  }
+
+  Future<List<Notice>> notifications({
+    required String accessToken,
+    String? centerId,
+  }) async {
+    final response = await _authed(
+      'GET',
+      '/v1/notifications',
+      accessToken,
+      centerId: centerId,
+    );
+    if (response.statusCode != 200) {
+      throw const AuthException('unexpected error');
+    }
+    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    return [
+      for (final raw in json['notifications'] as List<dynamic>? ?? [])
+        Notice.fromJson(raw as Map<String, dynamic>),
+    ];
+  }
+
+  Future<Notice> openNotification({
+    required String accessToken,
+    required String id,
+    String? centerId,
+  }) async {
+    final response = await _authed(
+      'POST',
+      '/v1/notifications/$id/read',
+      accessToken,
+      centerId: centerId,
+    );
+    if (response.statusCode != 200) {
+      throw const AuthException('unexpected error');
+    }
+    return Notice.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
   }
 
   Future<PeoplePage> people({
